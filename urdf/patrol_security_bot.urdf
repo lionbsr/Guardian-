@@ -1,0 +1,636 @@
+<?xml version="1.0"?>
+<robot name="patrol_security_bot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ================== MATERIALS ================== -->
+  <material name="gray">
+    <color rgba="0.5 0.5 0.5 1.0"/>
+  </material>
+  <material name="dark_gray">
+    <color rgba="0.3 0.3 0.3 1.0"/>
+  </material>
+  <material name="black">
+    <color rgba="0.1 0.1 0.1 1.0"/>
+  </material>
+  <material name="blue">
+    <color rgba="0.1 0.3 0.8 1.0"/>
+  </material>
+  <material name="green">
+    <color rgba="0.1 0.7 0.1 1.0"/>
+  </material>
+  <material name="red">
+    <color rgba="0.8 0.1 0.1 1.0"/>
+  </material>
+  <material name="yellow">
+    <color rgba="0.9 0.8 0.1 1.0"/>
+  </material>
+
+  <!-- ================== BASE BODY ================== -->
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="20.0"/>
+      <!-- kabaca box(0.6,0.4,0.2) için atalet -->
+      <inertia ixx="0.33" ixy="0.0" ixz="0.0"
+               iyy="0.67" iyz="0.0"
+               izz="0.87"/>
+    </inertial>
+
+    <!-- görsel: STL gövde -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/base/base_body.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="gray"/>
+    </visual>
+
+    <!-- çarpışma: basit kutu -->
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.6 0.4 0.2"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ================== DRIVE SİSTEMİ ================== -->
+
+  <!-- Sol tahrik tekeri -->
+  <link name="left_wheel_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="2.0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0"
+               iyy="0.01" iyz="0"
+               izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/drive/wheel.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.1" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="left_wheel_joint" type="continuous">
+    <!-- base_link koordinatında x:0, y:sol(+), z:tabana yakın -->
+    <origin xyz="0 0.25 -0.1" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="left_wheel_link"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- Sağ tahrik tekeri -->
+  <link name="right_wheel_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="2.0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0"
+               iyy="0.01" iyz="0"
+               izz="0.01"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/drive/wheel.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.1" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="right_wheel_joint" type="continuous">
+    <origin xyz="0 -0.25 -0.1" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="right_wheel_link"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- Arka avare/caster teker -->
+  <link name="rear_caster_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.5"/>
+      <inertia ixx="0.001" ixy="0" ixz="0"
+               iyy="0.001" iyz="0"
+               izz="0.001"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/drive/caster_wheel.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.03"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- İstersen type="continuous" yapıp z etrafında döner caster olarak modelleyebilirsin -->
+  <joint name="rear_caster_joint" type="fixed">
+    <origin xyz="-0.25 0 -0.05" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="rear_caster_link"/>
+  </joint>
+
+  <!-- ================== ÖN BUMPER MODÜLÜ ================== -->
+
+  <link name="front_bumper_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0"
+               iyy="0.02" iyz="0"
+               izz="0.03"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/bumper/front_bumper.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.6 0.05 0.15"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Bumper'ı base_link'e prismatic olarak bağlayıp yaylı tampon gibi gösteriyoruz -->
+  <joint name="front_bumper_joint" type="prismatic">
+    <origin xyz="0.35 0 0" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="front_bumper_link"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-0.03" upper="0.0" effort="100" velocity="0.2"/>
+  </joint>
+
+  <!-- Bumper üzerindeki yakın mesafe IR sensörleri -->
+  <link name="ir_front_left_link">
+    <visual>
+      <origin xyz="0.25 0.15 0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/sensors/env_sensor_box.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+    <collision>
+      <origin xyz="0.25 0.15 0.0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.05 0.03"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="ir_front_left_joint" type="fixed">
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+    <parent link="front_bumper_link"/>
+    <child link="ir_front_left_link"/>
+  </joint>
+
+  <link name="ir_front_right_link">
+    <visual>
+      <origin xyz="0.25 -0.15 0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/sensors/env_sensor_box.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+    <collision>
+      <origin xyz="0.25 -0.15 0.0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.05 0.03"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="ir_front_right_joint" type="fixed">
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+    <parent link="front_bumper_link"/>
+    <child link="ir_front_right_link"/>
+  </joint>
+
+  <!-- Zemine bakan kısa menzilli sensör -->
+  <link name="ir_floor_center_link">
+    <visual>
+      <origin xyz="0.2 0 -0.05" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/sensors/env_sensor_box.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+    <collision>
+      <origin xyz="0.2 0 -0.05" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.05 0.03"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="ir_floor_center_joint" type="fixed">
+    <origin xyz="0 0 -0.05" rpy="0 0 0"/>
+    <parent link="front_bumper_link"/>
+    <child link="ir_floor_center_link"/>
+  </joint>
+
+  <!-- ================== MAST / SENSÖR KULESİ ================== -->
+
+  <!-- Mast taban segmenti -->
+  <link name="mast_base_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1.0"/>
+      <inertia ixx="0.005" ixy="0" ixz="0"
+               iyy="0.005" iyz="0"
+               izz="0.005"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/mast/mast_segment.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.06 0.06 0.3"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="mast_base_joint" type="fixed">
+    <!-- gövdenin üstünden çıkıyor: z ~0.2/2 + 0.3/2 = 0.25 -->
+    <origin xyz="0 0 0.25" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="mast_base_link"/>
+  </joint>
+
+  <!-- Mast orta segmenti -->
+  <link name="mast_mid_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.8"/>
+      <inertia ixx="0.004" ixy="0" ixz="0"
+               iyy="0.004" iyz="0"
+               izz="0.004"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/mast/mast_segment.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.06 0.06 0.3"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="mast_mid_joint" type="fixed">
+    <!-- mast_base üstüne ekleniyor -->
+    <origin xyz="0 0 0.3" rpy="0 0 0"/>
+    <parent link="mast_base_link"/>
+    <child link="mast_mid_link"/>
+  </joint>
+
+  <!-- Mast üst segmenti -->
+  <link name="mast_top_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.8"/>
+      <inertia ixx="0.004" ixy="0" ixz="0"
+               iyy="0.004" iyz="0"
+               izz="0.004"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/mast/mast_segment.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="dark_gray"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.06 0.06 0.3"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="mast_top_joint" type="fixed">
+    <origin xyz="0 0 0.3" rpy="0 0 0"/>
+    <parent link="mast_mid_link"/>
+    <child link="mast_top_link"/>
+  </joint>
+
+  <!-- ================== MAST ÜZERİNDE SENSÖRLER (ORTA) ================== -->
+
+  <!-- Mast ortasında 2D LiDAR -->
+  <link name="lidar_link">
+    <visual>
+      <origin xyz="0.15 0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/sensors/lidar.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0.15 0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.08" length="0.06"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="lidar_joint" type="fixed">
+    <origin xyz="0 0 0.1" rpy="0 0 0"/>
+    <parent link="mast_mid_link"/>
+    <child link="lidar_link"/>
+  </joint>
+
+  <!-- Ön RGB kamera -->
+  <link name="camera_rgb_front_link">
+    <visual>
+      <origin xyz="0.18 0 0.05" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/sensors/camera_box.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+    <collision>
+      <origin xyz="0.18 0 0.05" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.08 0.06 0.05"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="camera_rgb_front_joint" type="fixed">
+    <origin xyz="0 0 0.15" rpy="0 0 0"/>
+    <parent link="mast_mid_link"/>
+    <child link="camera_rgb_front_link"/>
+  </joint>
+
+  <!-- Ön derinlik kamerası -->
+  <link name="camera_depth_front_link">
+    <visual>
+      <origin xyz="0.18 0.08 0.05" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/sensors/camera_box.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0.18 0.08 0.05" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.08 0.06 0.05"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="camera_depth_front_joint" type="fixed">
+    <origin xyz="0 0 0.18" rpy="0 0 0"/>
+    <parent link="mast_mid_link"/>
+    <child link="camera_depth_front_link"/>
+  </joint>
+
+  <!-- Mast ortasında mikrofon array -->
+  <link name="mic_array_link">
+    <visual>
+      <origin xyz="-0.1 0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/sensors/mic_array.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="yellow"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.1 0 0.0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.1 0.05 0.02"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="mic_array_joint" type="fixed">
+    <origin xyz="0 0 0.12" rpy="0 0 0"/>
+    <parent link="mast_mid_link"/>
+    <child link="mic_array_link"/>
+  </joint>
+
+  <!-- Mast ortasında siren/hoparlör -->
+  <link name="siren_link">
+    <visual>
+      <origin xyz="-0.12 0 0.1" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/alarms/siren_box.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.12 0 0.1" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.12 0.12 0.08"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="siren_joint" type="fixed">
+    <origin xyz="0 0 0.08" rpy="0 0 0"/>
+    <parent link="mast_mid_link"/>
+    <child link="siren_link"/>
+  </joint>
+
+  <!-- ================== MAST ÜSTÜ (TAVAN/YÜKSEK SEVİYE SENSÖRLER) ================== -->
+
+  <!-- Termal kamera -->
+  <link name="camera_thermal_top_link">
+    <visual>
+      <origin xyz="0.15 0 0.1" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/sensors/camera_box.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+    <collision>
+      <origin xyz="0.15 0 0.1" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.08 0.06 0.05"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="camera_thermal_top_joint" type="fixed">
+    <origin xyz="0 0 0.15" rpy="0 0 0"/>
+    <parent link="mast_top_link"/>
+    <child link="camera_thermal_top_link"/>
+  </joint>
+
+  <!-- CO2 sensörü -->
+  <link name="co2_sensor_link">
+    <visual>
+      <origin xyz="0 0.1 0.1" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/sensors/env_sensor_box.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="yellow"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0.1 0.1" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.05 0.03"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="co2_sensor_joint" type="fixed">
+    <origin xyz="0 0 0.18" rpy="0 0 0"/>
+    <parent link="mast_top_link"/>
+    <child link="co2_sensor_link"/>
+  </joint>
+
+  <!-- Gaz/smoke sensörü -->
+  <link name="gas_sensor_link">
+    <visual>
+      <origin xyz="0 -0.1 0.1" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/sensors/env_sensor_box.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="yellow"/>
+    </visual>
+    <collision>
+      <origin xyz="0 -0.1 0.1" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.05 0.03"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="gas_sensor_joint" type="fixed">
+    <origin xyz="0 0 0.18" rpy="0 0 0"/>
+    <parent link="mast_top_link"/>
+    <child link="gas_sensor_link"/>
+  </joint>
+
+  <!-- Sıcaklık/nem sensörü -->
+  <link name="temp_humid_sensor_link">
+    <visual>
+      <origin xyz="-0.08 0 0.18" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/sensors/env_sensor_box.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="green"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.08 0 0.18" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.05 0.05 0.03"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="temp_humid_sensor_joint" type="fixed">
+    <origin xyz="0 0 0.22" rpy="0 0 0"/>
+    <parent link="mast_top_link"/>
+    <child link="temp_humid_sensor_link"/>
+  </joint>
+
+  <!-- Uyarı ışıkları (sol & sağ) -->
+  <link name="warning_light_left_link">
+    <visual>
+      <origin xyz="0 0.12 0.22" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/alarms/warning_light.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="yellow"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0.12 0.22" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.08"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="warning_light_left_joint" type="fixed">
+    <origin xyz="0 0 0.25" rpy="0 0 0"/>
+    <parent link="mast_top_link"/>
+    <child link="warning_light_left_link"/>
+  </joint>
+
+  <link name="warning_light_right_link">
+    <visual>
+      <origin xyz="0 -0.12 0.22" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/alarms/warning_light.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="yellow"/>
+    </visual>
+    <collision>
+      <origin xyz="0 -0.12 0.22" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.05" length="0.08"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="warning_light_right_joint" type="fixed">
+    <origin xyz="0 0 0.25" rpy="0 0 0"/>
+    <parent link="mast_top_link"/>
+    <child link="warning_light_right_link"/>
+  </joint>
+
+  <!-- Anten / haberleşme -->
+  <link name="antenna_link">
+    <visual>
+      <origin xyz="0 0 0.35" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/misc/antenna.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="blue"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.35" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.02 0.02 0.4"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="antenna_joint" type="fixed">
+    <origin xyz="0 0 0.3" rpy="0 0 0"/>
+    <parent link="mast_top_link"/>
+    <child link="antenna_link"/>
+  </joint>
+
+  <!-- ================== ÜST GÖVDE ÜZERİNDE BUTON ================== -->
+
+  <link name="emergency_button_link">
+    <visual>
+      <origin xyz="0 0 0.12" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="../meshes/misc/button.stl" scale="1 1 1"/>
+      </geometry>
+      <material name="red"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.12" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.02" length="0.02"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="emergency_button_joint" type="fixed">
+    <origin xyz="-0.1 0 0.12" rpy="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="emergency_button_link"/>
+  </joint>
+
+</robot>
